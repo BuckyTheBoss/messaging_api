@@ -25,7 +25,7 @@ SECRET_KEY = 'z1)@@4kk_$!xrby@$ccf3%ku!lu^d9-ie@)qk2wh47wyf%^ah)'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['messagingapitest.pythonanywhere.com', '127.0.0.1:8000']
 
 
 # Application definition
