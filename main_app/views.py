@@ -24,8 +24,9 @@ def read_message(request, message_id):
     if request.user not in [message.sender, message.receiver]:
         return Response(status=status.HTTP_403_FORBIDDEN)
     serializer = MessageSerializer(message)
-    message.is_read = True
-    message.save()
+    if request.user == message.receiver:
+        message.is_read = True
+        message.save()
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
