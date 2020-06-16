@@ -31,13 +31,13 @@ class MessagesTest(APITestCase):
     def authenticate_user_3(self):
         self.client.credentials(HTTP_AUTHORIZATION='Token  ' + self.token3.key)
 
-    def send_authenticated_message(self):
+    def send_authenticated_message_from_user1_to_user2(self):
         self.authenticate_user_1()
         response = self.client.post(f'/messages/new/{self.user2.id}', self.data)
         return response
 
     def test_message_send_authenticated(self):
-        response = self.send_authenticated_message()
+        response = self.send_authenticated_message_from_user1_to_user2()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['id'], 1)
 
@@ -46,43 +46,49 @@ class MessagesTest(APITestCase):
         response = self.client.post(f'/messages/new/{self.user2.id}', self.data)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_message_read(self):
-        message_id = self.send_authenticated_message().data["id"]
-
-        # check that if SENDER views the message it ISN'T marked as read
-        self.client.get(f'/messages/read/{message_id}/')
-        self.assertFalse(Message.objects.get(id=message_id).is_read)
-
-        # check that if RECEIVER views the message it IS marked as read
+    def test_message_is_marked_as_read_when_viewed_by_receiver(self):
+        message_id = self.send_authenticated_message_from_user1_to_user2().data["id"]
         self.authenticate_user_2()
         self.client.get(f'/messages/read/{message_id}/')
         self.assertTrue(Message.objects.get(id=message_id).is_read)
 
-    def test_message_delete(self):
-        message_id = self.send_authenticated_message().data["id"]
+    def test_message_is_not_marked_as_read_when_viewed_by_sender(self):
+        message_id = self.send_authenticated_message_from_user1_to_user2().data["id"]
+        self.client.get(f'/messages/read/{message_id}/')
+        self.assertFalse(Message.objects.get(id=message_id).is_read)
 
-        # test that non owners cant delete objects
+    def test_message_cannot_be_deleted_by_non_owners(self):
+        message_id = self.send_authenticated_message_from_user1_to_user2().data["id"]
         self.authenticate_user_3()
         response = self.client.delete(f'/messages/delete/{message_id}/')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # test that owner can delete objects
+    def test_message_can_be_deleted_by_owners(self):
+        message_id = self.send_authenticated_message_from_user1_to_user2().data["id"]
         self.authenticate_user_2()
         self.client.delete(f'/messages/delete/{message_id}/')
         self.assertFalse(Message.objects.filter(id=message_id).exists())
 
-    def test_message_list(self):
-        self.send_authenticated_message()
-
-        # test that the receiver sees the message in message list
+    def test_receiver_seeing_messages_in_list_view(self):
+        self.send_authenticated_message_from_user1_to_user2()
         self.authenticate_user_2()
         response = self.client.get(f'/messages/')
         self.assertTrue(response.data)
 
-        # test that other users dont see this message in their list
+    def test_receiver_seeing_messages_in_list_unread_view(self):
+        self.send_authenticated_message_from_user1_to_user2()
+        self.authenticate_user_2()
+        response = self.client.get(f'/messages/unread')
+        self.assertTrue(response.data)
+
+    def test_others_not_seeing_messages_in_list_view(self):
+        self.send_authenticated_message_from_user1_to_user2()
         self.authenticate_user_3()
         response = self.client.get(f'/messages/')
         self.assertFalse(response.data)
 
-
-
+    def test_others_not_seeing_messages_in_list_unread_view(self):
+        self.send_authenticated_message_from_user1_to_user2()
+        self.authenticate_user_3()
+        response = self.client.get(f'/messages/unread')
+        self.assertFalse(response.data)
