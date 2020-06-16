@@ -19,13 +19,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'z1)@@4kk_$!xrby@$ccf3%ku!lu^d9-ie@)qk2wh47wyf%^ah)'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['messagingapitest.pythonanywhere.com', '127.0.0.1:8000']
 
 
 # Application definition
@@ -72,16 +65,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'messaging_api.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
 
 
 # Password validation
@@ -134,3 +117,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+# Load local settings
+try:
+   from .local_settings import *
+except ImportError:
+    raise Exception('A local_settings.py file is required to run this project')
